@@ -1,5 +1,8 @@
 name: Deploy Package
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -119,9 +122,31 @@ jobs:
           "package_name=$env:PACKAGE_NAME" >> $env:GITHUB_OUTPUT
           "package_path=$packagePath" >> $env:GITHUB_OUTPUT
 
+      - name: Publish to GitHub Release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ inputs.release_number }}'
+          $packagePath = '${{ steps.package.outputs.package_path }}'
+          $packageName = '${{ steps.package.outputs.package_name }}'
+
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag `
+              --repo $env:GITHUB_REPOSITORY `
+              --title $tag `
+              --notes "Deployment package for release $tag"
+          }
+
+          gh release upload $tag $packagePath `
+            --repo $env:GITHUB_REPOSITORY `
+            --clobber
+
       - name: Summarize package
         shell: pwsh
         run: |
           "Release package ready: $env:PACKAGE_NAME" >> $env:GITHUB_STEP_SUMMARY
           "" >> $env:GITHUB_STEP_SUMMARY
-          "Path on runner: $env:RELEASE_DIR/$env:PACKAGE_NAME" >> $env:GITHUB_STEP_SUMMARY
+          "GitHub Release tag: ${{ inputs.release_number }}" >> $env:GITHUB_STEP_SUMMARY
+          "Release asset: $env:PACKAGE_NAME" >> $env:GITHUB_STEP_SUMMARY
