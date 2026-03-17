@@ -1,0 +1,127 @@
+name: Deploy Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_os:
+        description: Deployment environment
+        required: true
+        type: choice
+        options:
+          - windows
+          - linux
+      release_number:
+        description: Release number used in the package file name
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      target_os:
+        description: Deployment environment
+        required: true
+        type: string
+      release_number:
+        description: Release number used in the package file name
+        required: true
+        type: string
+    outputs:
+      package_name:
+        description: Generated deployment package file name
+        value: ${{ jobs.package.outputs.package_name }}
+      package_path:
+        description: Generated deployment package file path on runner
+        value: ${{ jobs.package.outputs.package_path }}
+
+jobs:
+  package:
+    name: Build ${{ inputs.target_os }} release package
+    runs-on: ${{ inputs.target_os == 'windows' && 'windows-latest' || 'ubuntu-latest' }}
+    outputs:
+      package_name: ${{ steps.package.outputs.package_name }}
+      package_path: ${{ steps.package.outputs.package_path }}
+
+    steps:
+      - name: Validate inputs
+        shell: pwsh
+        run: |
+          $target = '${{ inputs.target_os }}'
+          if ($target -notin @('windows', 'linux')) {
+            throw "target_os must be either 'windows' or 'linux'."
+          }
+
+          if ([string]::IsNullOrWhiteSpace('${{ inputs.release_number }}')) {
+            throw "release_number is required."
+          }
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Prepare publish variables
+        shell: pwsh
+        run: |
+          $target = '${{ inputs.target_os }}'
+          $releaseNumber = '${{ inputs.release_number }}'
+          $workspace = $env:GITHUB_WORKSPACE
+
+          if ($target -eq 'windows') {
+            $rid = 'win-x64'
+            $packageName = "spc-website-$releaseNumber-windows.zip"
+          }
+          else {
+            $rid = 'linux-x64'
+            $packageName = "spc-website-$releaseNumber-linux.tar.gz"
+          }
+
+          $publishDir = Join-Path $workspace "publish/$target"
+          $releaseDir = Join-Path $workspace "release"
+
+          "RID=$rid" >> $env:GITHUB_ENV
+          "PUBLISH_DIR=$publishDir" >> $env:GITHUB_ENV
+          "RELEASE_DIR=$releaseDir" >> $env:GITHUB_ENV
+          "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
+
+      - name: Publish app
+        shell: pwsh
+        run: |
+          dotnet publish ./SPC.Website.csproj `
+            -c Release `
+            -r $env:RID `
+            --self-contained false `
+            -o $env:PUBLISH_DIR
+
+      - name: Create deployment package
+        id: package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:RELEASE_DIR | Out-Null
+          $packagePath = Join-Path $env:RELEASE_DIR $env:PACKAGE_NAME
+
+          if ('${{ inputs.target_os }}' -eq 'windows') {
+            if (Test-Path $packagePath) {
+              Remove-Item $packagePath -Force
+            }
+
+            Compress-Archive -Path (Join-Path $env:PUBLISH_DIR '*') -DestinationPath $packagePath -Force
+          }
+          else {
+            if (Test-Path $packagePath) {
+              Remove-Item $packagePath -Force
+            }
+
+            tar -czf $packagePath -C $env:PUBLISH_DIR .
+          }
+
+          "package_name=$env:PACKAGE_NAME" >> $env:GITHUB_OUTPUT
+          "package_path=$packagePath" >> $env:GITHUB_OUTPUT
+
+      - name: Summarize package
+        shell: pwsh
+        run: |
+          "Release package ready: $env:PACKAGE_NAME" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          "Path on runner: $env:RELEASE_DIR/$env:PACKAGE_NAME" >> $env:GITHUB_STEP_SUMMARY

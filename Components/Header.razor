@@ -6,14 +6,44 @@
         </a>
 
         <nav class="site-nav" aria-label="Primary">
-            <a href="/">Home</a>
+            <a class="site-nav__home" href="/" aria-label="Home">
+                <img src="/images/icons/home.svg" alt="" class="site-nav__home-icon" />
+            </a>
             <a href="/modules">Modules</a>
             <a href="/services">Services</a>
             <a href="/support">Support</a>
-            <a href="/about">About</a>
-            <a href="/contact">Contact</a>
+            <a href="/downloads">Downloads</a>
+            <div class="site-nav__dropdown">
+                <button class="site-nav__dropdown-toggle"
+                        type="button"
+                        aria-expanded="@isAboutMenuOpen"
+                        @onclick="ToggleAboutMenu">
+                    About
+                </button>
+                @if (isAboutMenuOpen)
+                {
+                    <div class="site-nav__dropdown-menu">
+                        <a href="/about" @onclick="CloseAboutMenu">About</a>
+                        <a href="/contact" @onclick="CloseAboutMenu">Contact</a>
+                    </div>
+                }
+            </div>
         </nav>
 
         <a class="button button--primary button--small" href="/demo">Request Demo</a>
     </div>
 </header>
+
+@code {
+    private bool isAboutMenuOpen;
+
+    private void ToggleAboutMenu()
+    {
+        isAboutMenuOpen = !isAboutMenuOpen;
+    }
+
+    private void CloseAboutMenu()
+    {
+        isAboutMenuOpen = false;
+    }
+}

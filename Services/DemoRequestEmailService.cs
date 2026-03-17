@@ -1,7 +1,8 @@
-using Microsoft.Extensions.Configuration;
-using SPC.Website.Models;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+
+using SPC.Website.Models;
+
 using System.Net;
 
 namespace SPC.Website.Services;

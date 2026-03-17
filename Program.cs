@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http.Features;
 using SPC.Website.Models;
 using SPC.Website.Services;
 
@@ -8,7 +9,16 @@ builder.Host.UseWindowsService();
 builder.Host.UseSystemd();
 
 var httpEndpointUrl = builder.Configuration["Kestrel:Endpoints:Http:Url"] ?? "http://0.0.0.0:7002";
+var downloadsOptions = builder.Configuration.GetSection("Downloads").Get<DownloadsOptions>() ?? new DownloadsOptions();
 
+builder.Services.Configure<DownloadsOptions>(builder.Configuration.GetSection("Downloads"));
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = downloadsOptions.UploadMaxRequestBodyBytes > 0
+        ? downloadsOptions.UploadMaxRequestBodyBytes
+        : 1073741824;
+});
+builder.Services.AddControllers();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -18,6 +28,7 @@ builder.Services.AddHttpClient("ServerAPI", client =>
 });
 
 builder.Services.AddScoped<DemoRequestEmailService>();
+builder.Services.AddSingleton<DownloadBrowserService>();
 
 var app = builder.Build();
 
@@ -65,6 +76,8 @@ app.MapPost("/api/demo-request", async (
     await emailService.SendDemoRequestAsync(request);
     return Results.Ok(new { message = "Thank you. We will contact you shortly." });
 });
+
+app.MapControllers();
 
 app.MapRazorComponents<SPC.Website.App>()
     .AddInteractiveServerRenderMode();

@@ -1,0 +1,317 @@
+@page "/downloads"
+@page "/downloads/{*RelativePath}"
+@using SPC.Website.Services
+@layout MainLayout
+
+@inject DownloadBrowserService DownloadBrowser
+
+<PageTitle>Downloads | SPC Technology</PageTitle>
+
+<section class="section" style="padding-bottom:0px;">
+    <div class="container">
+        <div class="section-shell">
+            <p class="eyebrow">Downloads</p>
+            <h1>Downloads</h1>
+            <p class="lead">
+                Access public files from SPC Technology, including application binaries, release packages, and customer-facing documentation.
+            </p>
+            <p>
+                This page is designed for direct file access. Large binary downloads are supported, and all files are delivered as attachments.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section section--alt section--downloads-browser">
+    <div class="container">
+        <div class="section-shell">
+            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+            {
+                <div class="download-state">
+                    <h2 class="section-title">Downloads unavailable</h2>
+                    <p class="section-intro">@ErrorMessage</p>
+                </div>
+            }
+            else if (DirectoryResult is not null)
+            {
+                <div class="download-toolbar">
+                    <div class="download-toolbar__nav">
+                        <div class="download-breadcrumbs-wrap">
+                            @if (CanMoveUp)
+                            {
+                                <a class="download-up"
+                                   href="@ParentHref"
+                                   aria-label="Go to parent folder">
+                                    <img src="/images/downloads/up-level.svg"
+                                         alt=""
+                                         class="download-up__icon" />
+                                </a>
+                            }
+
+                            <nav class="download-breadcrumbs" aria-label="Breadcrumb">
+                                @foreach (var crumb in Breadcrumbs)
+                                {
+                                    if (crumb.IsCurrent)
+                                    {
+                                        <span aria-current="page">@crumb.Label</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="@crumb.Href">@crumb.Label</a>
+                                    }
+                                }
+                            </nav>
+                        </div>
+                    </div>
+
+                    <div class="download-toolbar__search">
+                        <label class="sr-only" for="downloads-search">Search files and folders</label>
+                        <input id="downloads-search"
+                               class="input"
+                               type="search"
+                               placeholder="Search this folder"
+                               @bind="SearchQuery"
+                               @bind:event="oninput" />
+                    </div>
+                </div>
+
+                <div class="download-list">
+                    <div class="download-list__header">
+                        <span>Name</span>
+                        <span>Type</span>
+                        <span>Size</span>
+                        <span>Updated</span>
+                        <span></span>
+                    </div>
+
+                    @if (VisibleEntries.Count == 0)
+                    {
+                        <div class="download-state">
+                            <h3>No files found</h3>
+                            <p>
+                                There are no matching files or folders in this location.
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var entry in VisibleEntries)
+                        {
+                            @if (entry.IsDirectory)
+                            {
+                                <a class="download-row download-row--folder"
+                                   href="@GetBrowseHref(entry.RelativePath)">
+                                    <span class="download-row__name">
+                                        <span class="download-row__icon" aria-hidden="true">
+                                            <img src="@GetIconSrc(entry)"
+                                                 alt=""
+                                                 class="download-row__icon-image" />
+                                        </span>
+                                        <span>
+                                            <strong>@entry.Name</strong>
+                                        </span>
+                                    </span>
+                                    <span></span>
+                                    <span>-</span>
+                                    <span>@entry.LastModifiedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                                    <span class="download-row__action"></span>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="download-row download-row--file">
+                                    <span class="download-row__name">
+                                        <span class="download-row__icon" aria-hidden="true">
+                                            <img src="@GetIconSrc(entry)"
+                                                 alt=""
+                                                 class="download-row__icon-image" />
+                                        </span>
+                                        <span>
+                                            <strong>@entry.Name</strong>
+                                        </span>
+                                    </span>
+                                    <span>@entry.Extension.ToUpperInvariant().TrimStart('.')</span>
+                                    <span>@FormatFileSize(entry.SizeBytes)</span>
+                                    <span>@entry.LastModifiedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                                    <span class="download-row__action">
+                                        <a class="download-action"
+                                           href="@GetDownloadHref(entry.RelativePath)"
+                                           download
+                                           aria-label="Download @entry.Name">
+                                            <img src="/images/downloads/download.svg"
+                                                 alt=""
+                                                 class="download-action__icon" />
+                                            <span class="download-action__text">Download</span>
+                                        </a>
+                                    </span>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<CTASection ClassName="cta-block--strong"
+            Headline="Need help finding the right file?"
+            BodyText="If you are looking for a product build, a release package, or documentation and do not see it here, contact SPC Technology and we will direct you to the right download."
+            PrimaryText="Contact Support"
+            PrimaryHref="/support"
+            SecondaryText="Contact Sales"
+            SecondaryHref="/contact" />
+
+@code {
+    [Parameter]
+    public string? RelativePath { get; set; }
+
+    private DownloadDirectoryResult? DirectoryResult { get; set; }
+
+    private string SearchQuery { get; set; } = string.Empty;
+
+    private string? ErrorMessage { get; set; }
+
+    private IReadOnlyList<BreadcrumbItem> Breadcrumbs { get; set; } = [];
+
+    private IReadOnlyList<DownloadEntry> VisibleEntries =>
+        ApplySearch(DirectoryResult?.Directories ?? [], SearchQuery)
+            .Concat(ApplySearch(DirectoryResult?.Files ?? [], SearchQuery))
+            .ToArray();
+
+    private bool CanMoveUp => DirectoryResult is not null && !string.IsNullOrWhiteSpace(DirectoryResult.CurrentPath);
+
+    private string ParentHref => GetParentHref(DirectoryResult?.CurrentPath);
+
+    protected override void OnParametersSet()
+    {
+        SearchQuery = string.Empty;
+
+        try
+        {
+            DirectoryResult = DownloadBrowser.GetDirectoryContents(RelativePath);
+            Breadcrumbs = BuildBreadcrumbs(DirectoryResult.CurrentPath);
+            ErrorMessage = null;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            DirectoryResult = null;
+            Breadcrumbs = BuildBreadcrumbs(string.Empty);
+            ErrorMessage = "The requested folder was not found.";
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or UnauthorizedAccessException)
+        {
+            DirectoryResult = null;
+            Breadcrumbs = BuildBreadcrumbs(string.Empty);
+            ErrorMessage = ex.Message;
+        }
+    }
+
+    private static IReadOnlyList<DownloadEntry> ApplySearch(IEnumerable<DownloadEntry> entries, string searchQuery)
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            return entries.ToArray();
+        }
+
+        return entries
+            .Where(entry => entry.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<BreadcrumbItem> BuildBreadcrumbs(string currentPath)
+    {
+        var items = new List<BreadcrumbItem>
+        {
+            new("Downloads", "/downloads", string.IsNullOrWhiteSpace(currentPath))
+        };
+
+        if (string.IsNullOrWhiteSpace(currentPath))
+        {
+            return items;
+        }
+
+        var segments = currentPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var pathParts = new List<string>();
+
+        foreach (var segment in segments)
+        {
+            pathParts.Add(segment);
+            var href = "/downloads/" + string.Join('/', pathParts.Select(Uri.EscapeDataString));
+            items.Add(new BreadcrumbItem(segment, href, false));
+        }
+
+        var currentItem = items[^1];
+        items[^1] = currentItem with { IsCurrent = true };
+        return items;
+    }
+
+    private static string FormatFileSize(long? sizeBytes)
+    {
+        if (sizeBytes is null or < 0)
+        {
+            return "-";
+        }
+
+        string[] suffixes = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)sizeBytes.Value;
+        var suffixIndex = 0;
+
+        while (value >= 1024 && suffixIndex < suffixes.Length - 1)
+        {
+            value /= 1024;
+            suffixIndex++;
+        }
+
+        return $"{value:0.#} {suffixes[suffixIndex]}";
+    }
+
+    private static string GetBrowseHref(string relativePath)
+    {
+        return "/downloads/" + string.Join('/', relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.EscapeDataString));
+    }
+
+    private static string GetDownloadHref(string relativePath)
+    {
+        return "/downloads/file/" + string.Join('/', relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries).Select(Uri.EscapeDataString));
+    }
+
+    private static string GetParentHref(string? currentPath)
+    {
+        if (string.IsNullOrWhiteSpace(currentPath))
+        {
+            return "/downloads";
+        }
+
+        var segments = currentPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length <= 1)
+        {
+            return "/downloads";
+        }
+
+        return "/downloads/" + string.Join('/', segments.Take(segments.Length - 1).Select(Uri.EscapeDataString));
+    }
+
+    private static string GetIconSrc(DownloadEntry entry)
+    {
+        if (entry.IsDirectory)
+        {
+            return "/images/downloads/folder.svg";
+        }
+
+        return entry.Extension.ToLowerInvariant() switch
+        {
+            ".pdf" => "/images/downloads/pdf.svg",
+            ".csv" => "/images/downloads/csv.svg",
+            ".xls" => "/images/downloads/xls.svg",
+            ".xlsx" => "/images/downloads/xlsx.svg",
+            ".txt" => "/images/downloads/txt.svg",
+            ".rtf" => "/images/downloads/rtf.svg",
+            ".mht" or ".mhtml" => "/images/downloads/mht.svg",
+            ".png" or ".jpg" or ".jpeg" or ".gif" or ".bmp" or ".webp" or ".svg" => "/images/downloads/img.svg",
+            _ => "/images/downloads/file.svg"
+        };
+    }
+
+    private sealed record BreadcrumbItem(string Label, string Href, bool IsCurrent);
+}

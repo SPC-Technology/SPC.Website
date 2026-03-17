@@ -17,6 +17,7 @@ The site is intentionally simple and maintainable. It focuses on product positio
 ## Current Pages
 
 - `/` Home
+- `/downloads`
 - `/modules`
 - `/services`
 - `/support`
@@ -27,6 +28,7 @@ The site is intentionally simple and maintainable. It focuses on product positio
 ## Project Structure
 
 - [Program.cs](/mnt/c/SPC/spc-website-2026/Program.cs): app startup, DI, demo request API endpoint
+- [Controllers](/mnt/c/SPC/spc-website-2026/Controllers): controller-based APIs
 - [Pages](/mnt/c/SPC/spc-website-2026/Pages): site pages
 - [Components](/mnt/c/SPC/spc-website-2026/Components): shared UI components
 - [Layout](/mnt/c/SPC/spc-website-2026/Layout): site layout
@@ -166,6 +168,80 @@ Recommended production setup:
 export SENDGRID_API_KEY="your-sendgrid-api-key"
 ```
 
+Configure the public downloads root in [appsettings.json](/mnt/c/SPC/spc-website-2026/appsettings.json):
+
+```json
+"Downloads": {
+  "RootPath": "D:\\PublicDownloads",
+  "Title": "Public Downloads",
+  "AllowedExtensions": [],
+  "UploadApiKey": "your-machine-to-machine-key",
+  "UploadMaxRequestBodyBytes": 1073741824
+}
+```
+
+Platform-specific examples for `Downloads:RootPath`:
+
+- Windows: `D:\\PublicDownloads`
+- Linux: `/srv/spc/downloads`
+- macOS: `/Users/Shared/spc-downloads`
+
+You can also override the root path with an environment variable:
+
+- `Downloads__RootPath`
+
+The downloads area is public and filesystem-backed:
+
+- `/downloads`
+- `/downloads/{folder path}`
+- `GET /downloads/file/{file path}`
+
+Upload API for other applications:
+
+- `POST /api/downloads/upload`
+- implemented in [DownloadsController.cs](/mnt/c/SPC/spc-website-2026/Controllers/DownloadsController.cs)
+- Content type: `multipart/form-data`
+- Header: `x-api-key`
+- Form field `path`: optional target folder/subfolder under the downloads root
+- Form field `overwrite`: optional `true` or `false`
+- Form files: one or more files
+
+Behavior:
+
+- uploads are streamed to disk
+- target folders are created automatically if needed
+- files are restricted to the configured downloads root
+- existing files are rejected unless `overwrite=true`
+
+Example with `curl`:
+
+```bash
+curl -X POST "http://localhost:7002/api/downloads/upload" \
+  -H "x-api-key: your-machine-to-machine-key" \
+  -F "path=releases/v1" \
+  -F "overwrite=false" \
+  -F "files=@./PhoebusSetup.exe" \
+  -F "files=@./ReleaseNotes.pdf"
+```
+
+Example success response:
+
+```json
+{
+  "message": "Files uploaded successfully.",
+  "path": "releases/v1",
+  "files": [
+    {
+      "name": "PhoebusSetup.exe",
+      "relativePath": "releases/v1/PhoebusSetup.exe",
+      "sizeBytes": 104857600,
+      "extension": ".exe",
+      "lastModifiedUtc": "2026-03-17T18:30:00+00:00"
+    }
+  ]
+}
+```
+
 Set the default HTTP bind URL in the `Kestrel` section if needed:
 
 ```json
@@ -184,6 +260,8 @@ Set the default HTTP bind URL in the `Kestrel` section if needed:
 - Styling is centralized in [site.css](/mnt/c/SPC/spc-website-2026/wwwroot/css/site.css).
 - The site currently uses a dark visual direction inspired by the legacy SPC website.
 - Legacy brand assets, staff images, and customer logos were reused from the older SPC website source where appropriate.
+- The downloads implementation is designed to run on Windows, Linux, and macOS because it uses platform-neutral .NET filesystem APIs and relative-path normalization.
+- Service-hosting templates are included for Windows and Linux. macOS can run the app normally with `dotnet SPC.Website.dll` or be wrapped later with `launchd` if needed.
 
 ## Legacy Asset Source
 
