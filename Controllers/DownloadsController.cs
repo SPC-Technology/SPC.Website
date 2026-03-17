@@ -45,7 +45,7 @@ public sealed class DownloadsController : ControllerBase
         }
     }
 
-    [HttpPost("/api/downloads/upload")]
+    [HttpPost("/api/upload")]
     public async Task<IResult> Upload(CancellationToken cancellationToken)
     {
         var configuredApiKey = downloadBrowser.UploadApiKey;

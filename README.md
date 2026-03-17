@@ -198,7 +198,7 @@ The downloads area is public and filesystem-backed:
 
 Upload API for other applications:
 
-- `POST /api/downloads/upload`
+- `POST /api/upload`
 - implemented in [DownloadsController.cs](/mnt/c/SPC/spc-website-2026/Controllers/DownloadsController.cs)
 - Content type: `multipart/form-data`
 - Header: `x-api-key`
@@ -216,7 +216,7 @@ Behavior:
 Example with `curl`:
 
 ```bash
-curl -X POST "http://localhost:7002/api/downloads/upload" \
+curl -X POST "http://localhost:7002/api/upload" \
   -H "x-api-key: your-machine-to-machine-key" \
   -F "path=releases/v1" \
   -F "overwrite=false" \
