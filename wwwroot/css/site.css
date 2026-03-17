@@ -242,7 +242,7 @@ main {
 
 .hero,
 .section {
-    padding: 4.5rem 0;
+    padding: 4.5rem 0 0.5rem;
 }
 
 .hero {
@@ -250,8 +250,11 @@ main {
         linear-gradient(180deg, rgba(2, 8, 13, 0.12) 0%, rgba(2, 8, 13, 0.02) 100%);
 }
 
+
 .section--alt {
     background: rgba(5, 16, 25, 0.44);
+  padding: 0.5rem 0;
+    
 }
 
 .section--cta {
@@ -855,6 +858,7 @@ li + li {
     padding: 1rem 0;
     background: rgba(4, 13, 21, 0.58);
     backdrop-filter: blur(10px);
+    margin-top:3rem;
 }
 
 .trust-strip__inner {
@@ -1044,7 +1048,7 @@ li + li {
 }
 
 .download-row {
-    padding: 0.75rem 0.85rem;
+    padding: 0.5rem 0.85rem;
     border-radius: 0.8rem;
     background: rgba(255, 255, 255, 0.04);
     color: var(--color-muted);
