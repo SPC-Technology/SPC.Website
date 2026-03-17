@@ -1,0 +1,73 @@
+@inherits Microsoft.AspNetCore.Components.LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Web
+
+<HeadContent>
+    <title>Phoebus ERP | Business Software by SPC Technology</title>
+
+    <meta name="description"
+          content="Phoebus ERP by SPC Technology helps businesses manage finance, inventory, purchasing, sales, and reporting in one integrated platform." />
+
+    <meta name="keywords"
+          content="ERP software, Phoebus ERP, accounting software, inventory system, business management software" />
+
+    <meta name="author"
+          content="SPC Technology" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Phoebus ERP | Business Software by SPC Technology" />
+    <meta property="og:description" content="Modern ERP platform for finance, inventory, purchasing, sales and reporting." />
+    <meta property="og:url" content="https://www.spc-technology.com" />
+    <meta property="og:image" content="https://www.spc-technology.com/images/phoebus-preview.png" />
+    <meta property="og:site_name" content="SPC Technology" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Phoebus ERP | Business Software by SPC Technology" />
+    <meta name="twitter:description" content="Integrated ERP platform built by SPC Technology." />
+    <meta name="twitter:image" content="https://www.spc-technology.com/images/phoebus-preview.png" />
+
+    <script type="application/ld+json">
+        {
+         "@@context": "https://schema.org",
+         "@@type": "SoftwareApplication",
+         "name": "Phoebus ERP",
+         "applicationCategory": "BusinessApplication",
+         "operatingSystem": "Web",
+         "publisher": {
+           "@@type": "Organization",
+           "name": "SPC Technology",
+           "url": "https://www.spc-technology.com"
+         },
+         "description": "Phoebus ERP is a business management platform covering finance, inventory, purchasing, sales, and reporting.",
+         "url": "https://www.spc-technology.com"
+        }
+    </script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+</HeadContent>
+
+<div class="page-shell">
+    <div class="site-background" aria-hidden="true">
+        <div class="site-background__overlay"></div>
+        <div class="site-background__grid"></div>
+        <div class="site-background__orb site-background__orb--one"></div>
+        <div class="site-background__orb site-background__orb--two"></div>
+        <div class="site-background__shape"></div>
+    </div>
+
+    <Header />
+
+    <main>
+        @Body
+    </main>
+
+    <Footer />
+</div>

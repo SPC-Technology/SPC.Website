@@ -1,0 +1,38 @@
+<section class="section section--cta">
+    <div class="container">
+        <div class="cta-block @ClassName">
+            <h2>@Headline</h2>
+            <p>@BodyText</p>
+            <div class="actions">
+                <a class="button button--primary" href="@PrimaryHref">@PrimaryText</a>
+                @if (!string.IsNullOrWhiteSpace(SecondaryText) && !string.IsNullOrWhiteSpace(SecondaryHref))
+                {
+                    <a class="button button--secondary" href="@SecondaryHref">@SecondaryText</a>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string? ClassName { get; set; }
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string Headline { get; set; } = string.Empty;
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string BodyText { get; set; } = string.Empty;
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string PrimaryText { get; set; } = string.Empty;
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string PrimaryHref { get; set; } = "/";
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string? SecondaryText { get; set; }
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public string? SecondaryHref { get; set; }
+}

@@ -1,0 +1,120 @@
+@page "/demo"
+@inject IHttpClientFactory HttpClientFactory
+@layout MainLayout
+
+<PageTitle>Request Phoebus ERP Demo | SPC Technology</PageTitle>
+
+<section class="section">
+    <div class="container">
+        <p class="eyebrow">Request Demo</p>
+        <h1>Request a Phoebus ERP Demo</h1>
+        <p class="lead">
+            Use this form to request a Phoebus ERP product demonstration or to start a discussion about your business requirements.
+        </p>
+
+        @if (isSubmitted)
+        {
+            <div class="card">
+                <h2>Request Sent</h2>
+                <p>Thank you. Our team will contact you within one business day.</p>
+                <div class="actions">
+                    <a class="button button--secondary" href="/">Return Home</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="@model" OnValidSubmit="@SubmitAsync" class="demo-form">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="card">
+                        <p>@errorMessage</p>
+                    </div>
+                }
+
+                <fieldset disabled="@isSubmitting">
+                    <input type="text"
+                           style="display:none"
+                           tabindex="-1"
+                           autocomplete="off"
+                           @bind="model.Website" />
+
+                    <div class="grid grid--two">
+                        <div class="form-field">
+                            <label for="full-name">Full Name</label>
+                            <InputText id="full-name" class="input" @bind-Value="model.FullName" />
+                            <ValidationMessage For="@(() => model.FullName)" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="company">Company</label>
+                            <InputText id="company" class="input" @bind-Value="model.Company" />
+                            <ValidationMessage For="@(() => model.Company)" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="email">Email</label>
+                            <InputText id="email" class="input" @bind-Value="model.Email" />
+                            <ValidationMessage For="@(() => model.Email)" />
+                        </div>
+
+                        <div class="form-field">
+                            <label for="phone">Phone</label>
+                            <InputText id="phone" class="input" @bind-Value="model.Phone" />
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="message">Message</label>
+                        <InputTextArea id="message" class="input input--textarea" @bind-Value="model.Message" />
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="button button--primary" disabled="@isSubmitting">Submit Request</button>
+                        <a class="button button--secondary" href="/">Cancel</a>
+                    </div>
+                </fieldset>
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    private DemoRequestModel model = new();
+    private bool isSubmitting;
+    private bool isSubmitted;
+    private string? errorMessage;
+
+    private async Task SubmitAsync()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient("ServerAPI");
+            var response = await client.PostAsJsonAsync("api/demo-request", model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                isSubmitted = true;
+                model = new DemoRequestModel();
+            }
+            else
+            {
+                errorMessage = "Unable to submit your request at the moment. Please try again later.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Unable to submit your request at the moment. Please try again later.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
