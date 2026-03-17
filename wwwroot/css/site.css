@@ -304,6 +304,16 @@ h2 {
 
 h1 {
     font-size: clamp(2.2rem, 4vw, 4rem);
+    border-color: transparent;
+    outline: none;
+}
+
+h1:active,
+h1:focus,
+h1:focus-visible {
+    border-color: transparent;
+    outline: none;
+    box-shadow: none;
 }
 
 h2 {

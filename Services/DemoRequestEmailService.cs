@@ -17,7 +17,13 @@ public class DemoRequestEmailService
 
     public async Task SendDemoRequestAsync(DemoRequestModel model)
     {
-        var apiKey = configuration["SendGrid:ApiKey"];
+        var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            apiKey = configuration["SendGrid:ApiKey"];
+        }
+
         var fromEmail = configuration["SendGrid:FromEmail"];
         var fromName = configuration["SendGrid:FromName"];
         var toEmail = configuration["SendGrid:ToEmail"];

@@ -4,12 +4,17 @@ using SPC.Website.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseWindowsService();
+builder.Host.UseSystemd();
+
+var httpEndpointUrl = builder.Configuration["Kestrel:Endpoints:Http:Url"] ?? "http://0.0.0.0:7002";
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient("ServerAPI", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["App:BaseUrl"] ?? "https://localhost:5001/");
+    client.BaseAddress = new Uri(NormalizeBaseUrl(httpEndpointUrl));
 });
 
 builder.Services.AddScoped<DemoRequestEmailService>();
@@ -22,7 +27,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
@@ -66,3 +70,23 @@ app.MapRazorComponents<SPC.Website.App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+static string NormalizeBaseUrl(string url)
+{
+    if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+    {
+        return "http://localhost:7002/";
+    }
+
+    if (uri.Host is "0.0.0.0" or "*" or "+")
+    {
+        var builder = new UriBuilder(uri)
+        {
+            Host = "localhost"
+        };
+
+        return builder.Uri.ToString();
+    }
+
+    return uri.ToString();
+}

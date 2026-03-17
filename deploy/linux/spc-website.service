@@ -1,0 +1,17 @@
+[Unit]
+Description=SPC Technology Website
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/spc-website
+ExecStart=/usr/bin/dotnet /opt/spc-website/SPC.Website.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=spc-website
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://0.0.0.0:7002
+
+[Install]
+WantedBy=multi-user.target
