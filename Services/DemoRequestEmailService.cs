@@ -10,10 +10,12 @@ namespace SPC.Website.Services;
 public class DemoRequestEmailService
 {
     private readonly IConfiguration configuration;
+    private readonly ILogger<DemoRequestEmailService> logger;
 
-    public DemoRequestEmailService(IConfiguration configuration)
+    public DemoRequestEmailService(IConfiguration configuration, ILogger<DemoRequestEmailService> logger)
     {
         this.configuration = configuration;
+        this.logger = logger;
     }
 
     public async Task SendDemoRequestAsync(DemoRequestModel model)
@@ -34,8 +36,18 @@ public class DemoRequestEmailService
             string.IsNullOrWhiteSpace(fromEmail) ||
             recipients.Count == 0)
         {
+            logger.LogError(
+                "SendGrid configuration is incomplete. FromEmail configured: {HasFromEmail}. Recipient count: {RecipientCount}. ApiKey configured: {HasApiKey}.",
+                !string.IsNullOrWhiteSpace(fromEmail),
+                recipients.Count,
+                !string.IsNullOrWhiteSpace(apiKey));
             throw new InvalidOperationException("SendGrid configuration is incomplete.");
         }
+
+        logger.LogInformation(
+            "Sending demo request email for company {Company} to {RecipientCount} recipients.",
+            model.Company,
+            recipients.Count);
 
         var client = new SendGridClient(apiKey);
         var from = new EmailAddress(fromEmail, fromName);
@@ -53,9 +65,17 @@ public class DemoRequestEmailService
         {
             var body = await response.Body.ReadAsStringAsync();
 
+            logger.LogError(
+                "SendGrid failed for company {Company}. StatusCode: {StatusCode}. ResponseBody: {ResponseBody}",
+                model.Company,
+                response.StatusCode,
+                body);
+
             throw new InvalidOperationException(
                 $"SendGrid error: {response.StatusCode} {body}");
         }
+
+        logger.LogInformation("SendGrid accepted demo request email for company {Company}.", model.Company);
     }
 
     private static string BuildTextBody(DemoRequestModel model)

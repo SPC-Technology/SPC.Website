@@ -69,6 +69,26 @@ WIN_PROJ="$(wslpath -w '/mnt/c/SPC/spc-website-2026/SPC.Website.csproj')"
 '/mnt/c/Program Files/dotnet/dotnet.exe' build "$WIN_PROJ" -v minimal
 ```
 
+## Logging
+
+The app writes logs to:
+
+- console
+- rolling log files under `logs/`
+
+Default log file pattern:
+
+- `logs/spc-website-.log`
+
+This is configured in [appsettings.json](/mnt/c/SPC/spc-website-2026/appsettings.json) through `Serilog`.
+
+Demo request logging includes:
+
+- request submission attempts
+- validation failures
+- SendGrid configuration problems
+- SendGrid API failures and response bodies
+
 ## Hosting as a Service
 
 The app is configured to support both:
