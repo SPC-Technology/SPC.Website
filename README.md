@@ -159,6 +159,8 @@ Set SendGrid values in [appsettings.json](/mnt/c/SPC/spc-website-2026/appsetting
 }
 ```
 
+`SendGrid:ToEmail` can contain one address or multiple comma-separated addresses.
+
 For the API key, the app first checks the `SENDGRID_API_KEY` environment variable.
 If that variable is not set, it falls back to `SendGrid:ApiKey` in `appsettings.json`.
 

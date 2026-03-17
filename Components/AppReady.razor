@@ -1,0 +1,11 @@
+@inject IJSRuntime JS
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("spcHideAppSplash");
+        }
+    }
+}

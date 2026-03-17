@@ -7,12 +7,27 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="stylesheet" href="css/site.css" />
     <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
 </head>
 <body>
+    <div id="app-splash" class="app-splash" aria-live="polite">
+        <div class="app-splash__inner">
+            <div class="app-splash__spinner" aria-hidden="true"></div>
+            <p class="app-splash__title">Phoebus ERP</p>
+            <p class="app-splash__subtitle">Loading SPC Technology website...</p>
+        </div>
+    </div>
     <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <script>
+        window.spcHideAppSplash = function () {
+            const splash = document.getElementById('app-splash');
+            if (!splash) return;
+            splash.classList.add('app-splash--hidden');
+            window.setTimeout(() => splash.remove(), 280);
+        };
+    </script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

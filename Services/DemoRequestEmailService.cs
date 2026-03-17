@@ -1,4 +1,4 @@
-using SendGrid;
+﻿using SendGrid;
 using SendGrid.Helpers.Mail;
 
 using SPC.Website.Models;
@@ -28,22 +28,22 @@ public class DemoRequestEmailService
         var fromEmail = configuration["SendGrid:FromEmail"];
         var fromName = configuration["SendGrid:FromName"];
         var toEmail = configuration["SendGrid:ToEmail"];
+        var recipients = ParseRecipients(toEmail);
 
         if (string.IsNullOrWhiteSpace(apiKey) ||
             string.IsNullOrWhiteSpace(fromEmail) ||
-            string.IsNullOrWhiteSpace(toEmail))
+            recipients.Count == 0)
         {
             throw new InvalidOperationException("SendGrid configuration is incomplete.");
         }
 
         var client = new SendGridClient(apiKey);
         var from = new EmailAddress(fromEmail, fromName);
-        var to = new EmailAddress(toEmail);
 
-        var message = MailHelper.CreateSingleEmail(
+        var message = MailHelper.CreateSingleEmailToMultipleRecipients(
             from,
-            to,
-            $"Phoebus ERP Demo Request - {model.Company}",
+            recipients,
+            $"☎️ Phoebus ERP Demo Request - {model.Company}",
             BuildTextBody(model),
             BuildHtmlBody(model));
 
@@ -61,18 +61,18 @@ public class DemoRequestEmailService
     private static string BuildTextBody(DemoRequestModel model)
     {
         return
-            "Phoebus ERP Demo Request" + Environment.NewLine + Environment.NewLine +
+            "🟢 Phoebus ERP Demo Request" + Environment.NewLine + Environment.NewLine +
             $"Name: {model.FullName}" + Environment.NewLine +
-            $"Company: {model.Company}" + Environment.NewLine +
-            $"Email: {model.Email}" + Environment.NewLine +
-            $"Phone: {model.Phone}" + Environment.NewLine +
-            $"Message: {model.Message}";
+            $"🌐 Company: {model.Company}" + Environment.NewLine +
+            $"✉︎ Email: {model.Email}" + Environment.NewLine +
+            $"📞 Phone: {model.Phone}" + Environment.NewLine +
+            $"📢 Message: {model.Message}";
     }
 
     private static string BuildHtmlBody(DemoRequestModel model)
     {
         return $@"
-<h2>Phoebus ERP Demo Request</h2>
+<h2>🟢 Phoebus ERP Demo Request</h2>
 
 <p><strong>Name:</strong> {Encode(model.FullName)}</p>
 <p><strong>Company:</strong> {Encode(model.Company)}</p>
@@ -80,6 +80,7 @@ public class DemoRequestEmailService
 <p><strong>Phone:</strong> {Encode(model.Phone)}</p>
 
 <p><strong>Message:</strong></p>
+
 <p>{Encode(model.Message)}</p>
 ";
     }
@@ -87,5 +88,14 @@ public class DemoRequestEmailService
     private static string Encode(string? value)
     {
         return WebUtility.HtmlEncode(value ?? string.Empty);
+    }
+
+    private static List<EmailAddress> ParseRecipients(string? toEmail)
+    {
+        return (toEmail ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(email => !string.IsNullOrWhiteSpace(email))
+            .Select(email => new EmailAddress(email))
+            .ToList();
     }
 }

@@ -73,9 +73,26 @@
                     </div>
 
                     <div class="actions">
-                        <button type="submit" class="button button--primary" disabled="@isSubmitting">Submit Request</button>
+                        <button type="submit" class="button button--primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="button-status">
+                                    <span class="button-status__spinner" aria-hidden="true"></span>
+                                    <span>Sending...</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span>Submit Request</span>
+                            }
+                        </button>
                         <a class="button button--secondary" href="/">Cancel</a>
                     </div>
+
+                    @if (isSubmitting)
+                    {
+                        <p class="form-status" aria-live="polite">Sending your request. Please wait.</p>
+                    }
                 </fieldset>
             </EditForm>
         }
